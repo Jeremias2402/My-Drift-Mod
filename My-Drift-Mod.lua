@@ -1,11 +1,22 @@
 util.require_natives(1663599433)
 local json = require("json")
 
+-- Auto updater thanks to Hexarobi
+util.ensure_package_is_installed("lua/auto-updater")
+local auto_updater = require("auto-updater")
+
+auto_updater.run_auto_update({
+    source_url="https://raw.githubusercontent.com/Jeremias2402/My-Drift-Mod/main/My-Drift-Mod.lua",
+    script_relpath=SCRIPT_RELPATH,
+})
+
 local local_drift_score = 0
 local local_last_drift_time = util.current_time_millis()
 local drift_scores = {}
 local last_drift_times = {}
-local player_scores_file = filesystem.scripts_dir() .. "\\DriftMod\\PlayerScores.json"
+local drift_mod_dir = filesystem.scripts_dir() .. "\\DriftMod"
+filesystem.mkdirs(drift_mod_dir)
+local player_scores_file = drift_mod_dir .. "\\PlayerScores.json"
 local player_scores = {}
 
 local offset_x = 0
@@ -368,7 +379,7 @@ end)
 menu.toggle(menu.my_root(), "Show Distance", {"showdistance"}, "Toggle displaying the distance next to the drift score for debugging.", function(value)
     show_distance = value
 end, false)
-menu.toggle(menu.my_root(), "Show Other Players' Scores", {"showotherscores"}, "Toggle displaying the drift scores for other players.", function(value)
+menu.toggle(menu.my_root(), "Show Other Players Scores And Save Them To PlayerScores folder", {"showotherscores"}, "Toggle displaying the drift scores for other players.", function(value)
     show_other_players_scores = value
 end, true)
 menu.toggle(menu.my_root(), "Enable Drift Mode", {"driftmode"}, "Toggle drift mode on or off.", function(state)
