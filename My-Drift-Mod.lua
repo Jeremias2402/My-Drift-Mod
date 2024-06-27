@@ -373,6 +373,8 @@ local function toggle_drift_mode(state)
     end
 end
 
+-- Lulzman is a stupid dog
+
 menu.slider(menu.my_root(), "Proximity Threshold", {"proximitythreshold"}, "Adjust the proximity threshold for displaying and updating drift scores.", 10, 1000, 500, 10, function(value)
     proximity_threshold = value
 end)
