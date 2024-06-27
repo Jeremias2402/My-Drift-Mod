@@ -1,11 +1,14 @@
 -- Auto updater thanks to Hexarobi
-util.ensure_package_is_installed("lua/auto-updater")
-local auto_updater = require("auto-updater")
-
-auto_updater.run_auto_update({
+local auto_update_config = {
     source_url="https://raw.githubusercontent.com/Jeremias2402/My-Drift-Mod/main/My-Drift-Mod.lua",
     script_relpath=SCRIPT_RELPATH,
-})
+}
+
+util.ensure_package_is_installed('lua/auto-updater')
+local auto_updater = require('auto-updater')
+if auto_updater == true and not is_from_repository then
+    auto_updater.run_auto_update(auto_update_config)
+end
 
 util.require_natives(1663599433)
 local json = require("json")
@@ -394,3 +397,10 @@ end)
 menu.divider(menu.my_root(), "Drift Mod")
 menu.divider(menu.my_root(), "Instructions")
 menu.action(menu.my_root(), "How to Use :)", {}, "1. Enable drift mode using the toggle.\n2. Start drifting lol.\n3. Your drift score will be displayed above the vehicle if it's greater than zero.\n4. Adjust the proximity threshold using the slider.\n5. Toggle display options as needed.\n6. Drift scores are saved and displayed for nearby players within the specified proximity.", function() end)
+
+menu.my_root():action("Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
+    auto_update_config.check_interval = 0
+    if auto_updater.run_auto_update(auto_update_config) then
+        util.toast("No updates found")
+    end
+end)
