@@ -20,7 +20,7 @@ Welcome to the Drift Mod for GTA V! This script enhances your drifting experienc
 
 ## Usage
 
-1. **Enable Drift Mode:** Toggle drift mode on or off via the Stand menu.
+1. **Enable Drift Mode:** Toggle drift mode on or off.
 2. **Start Drifting:** Your drift score will be displayed next to your vehicle if it's greater than zero.
 3. **View High Scores:** Check your highest drift scores and aim to beat them!
 4. **Customize Settings:** You can also adjust proximity thresholds and toggle display options.
