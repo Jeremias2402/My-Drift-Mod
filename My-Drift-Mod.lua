@@ -1,6 +1,3 @@
-util.require_natives(1663599433)
-local json = require("json")
-
 -- Auto updater thanks to Hexarobi
 util.ensure_package_is_installed("lua/auto-updater")
 local auto_updater = require("auto-updater")
@@ -9,6 +6,9 @@ auto_updater.run_auto_update({
     source_url="https://raw.githubusercontent.com/Jeremias2402/My-Drift-Mod/main/My-Drift-Mod.lua",
     script_relpath=SCRIPT_RELPATH,
 })
+
+util.require_natives(1663599433)
+local json = require("json")
 
 local local_drift_score = 0
 local local_last_drift_time = util.current_time_millis()
