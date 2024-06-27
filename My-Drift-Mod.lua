@@ -398,7 +398,7 @@ menu.divider(menu.my_root(), "Drift Mod")
 menu.divider(menu.my_root(), "Instructions")
 menu.action(menu.my_root(), "How to Use :)", {}, "1. Enable drift mode using the toggle.\n2. Start drifting lol.\n3. Your drift score will be displayed above the vehicle if it's greater than zero.\n4. Adjust the proximity threshold using the slider.\n5. Toggle display options as needed.\n6. Drift scores are saved and displayed for nearby players within the specified proximity.", function() end)
 
-menu.my_root():action("Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
+menu.my_root():action("Check for Updates :)", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
     auto_update_config.check_interval = 0
     if auto_updater.run_auto_update(auto_update_config) then
         util.toast("No updates found")
