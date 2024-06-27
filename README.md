@@ -15,8 +15,8 @@ Welcome to the Drift Mod for GTA V! This script enhances your drifting experienc
 ## Installation
 
 1. **Download the Script:** Clone or download the repository.
-2. **Place the script in your `Stand/Lua Scripts` directory.
-3. **The lua will automatically create a folder called `DriftMod` in your `Stand/Lua Scripts` directory where it will store drift scores.
+2. **Install the Script:** Place the script in your `Stand/Lua Scripts` directory.
+3. **Extra:** The lua will automatically create a folder called `DriftMod` in your `Stand/Lua Scripts` directory where it will store drift scores.
 
 ## Usage
 
