@@ -208,7 +208,7 @@ util.create_tick_handler(function()
         local drift_angle, dot_product, drift_direction = get_drift_direction(vehicle)
         local speed = ENTITY.GET_ENTITY_SPEED_VECTOR(vehicle, true).y
 
-        if drift_angle > 15 and dot_product > 0 and speed > 1 then
+        if drift_angle > 15 and dot_product > 0 and speed > 4 then
             local_drift_score = local_drift_score + 100
             local_last_drift_time = util.current_time_millis()
         end
