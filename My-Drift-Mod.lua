@@ -1,8 +1,6 @@
 util.require_natives(1663599433)
 local json = require("json")
 
--- Fingaweg is a noop
-
 local local_drift_score = 0
 local local_last_drift_time = util.current_time_millis()
 local drift_scores = {}
