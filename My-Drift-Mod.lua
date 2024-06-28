@@ -29,6 +29,7 @@ local proximity_threshold = 500
 local show_distance = false
 local show_other_players_scores = true
 local drift_mode_enabled = false
+local save_scores_to_file = true
 
 local function load_scores(file_path)
     if not filesystem.exists(file_path) then
@@ -45,14 +46,17 @@ local function load_scores(file_path)
 end
 
 local function save_scores(file_path, data)
-    local file = io.open(file_path, "w")
-    if not file then
-        util.log("Failed to open scores file for writing")
-        return
+    if save_scores_to_file then
+        local file = io.open(file_path, "w")
+        if not file then
+            util.log("Failed to open scores file for writing")
+            return
+        end
+        file:write(json.encode(data))
+        file:close()
     end
-    file:write(json.encode(data))
-    file:close()
 end
+
 
 player_scores = load_scores(player_scores_file)
 
@@ -377,6 +381,9 @@ local function toggle_drift_mode(state)
 end
 
 -- Lulzman is a stupid dog
+menu.toggle(menu.my_root(), "Save Scores to File", {"savescorestofile"}, "Toggle saving drift scores to the file.", function(state)
+    save_scores_to_file = state
+end, true)
 
 menu.slider(menu.my_root(), "Proximity Threshold", {"proximitythreshold"}, "Adjust the proximity threshold for displaying and updating drift scores.", 10, 1000, 500, 10, function(value)
     proximity_threshold = value
