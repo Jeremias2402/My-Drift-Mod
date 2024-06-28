@@ -31,6 +31,7 @@ local show_other_players_scores = true
 local save_scores_to_file = true
 local drift_mode_enabled = false
 local score_counter_enabled = true
+local session_high_scores = {}
 
 local function load_scores(file_path)
     if not filesystem.exists(file_path) then
@@ -129,6 +130,24 @@ local function draw_large_message(title, message, duration)
     end)
 end
 
+if player == PLAYER.PLAYER_ID() then
+    local vehicle_name = get_vehicle_name(vehicle)
+    local player_name = get_player_name(player)
+    local session_high_score = session_high_scores[player_name] and session_high_scores[player_name][vehicle_name] or 0
+    local saved_high_score = player_scores[player_name] and player_scores[player_name][vehicle_name] or 0
+    local high_score = math.max(session_high_score, saved_high_score)
+
+    local message = (drift_score > high_score) and ("New Record: " .. drift_score) or ("Drift Score: " .. drift_score .. " (High Score: " .. high_score .. ")")
+    draw_large_message("Drift Ended", message .. " - Car: " .. vehicle_name, 300)
+
+    if drift_score > high_score then
+        player_scores[player_name][vehicle_name] = drift_score
+        if save_scores_to_file then
+            save_scores(player_scores_file, player_scores)
+        end
+    end
+end
+
 local function get_rating_text(score)
     if score >= 5000000 then
         return "DRIFT KING!", {r = 0.8, g = 0, b = 0.8, a = 1.0}
@@ -170,7 +189,7 @@ local function update_drift_score(player)
         local drift_angle, dot_product, drift_direction = get_drift_direction(vehicle)
         local speed = ENTITY.GET_ENTITY_SPEED_VECTOR(vehicle, true).y
 
-        if drift_angle > 15 and dot_product > 0 and speed > 4 then
+        if drift_angle > 15 and dot_product > 0 and speed > 1 then
             drift_score = drift_score + 100
             last_drift_time = util.current_time_millis()
         end
@@ -179,21 +198,36 @@ local function update_drift_score(player)
             if drift_score > 0 then
                 local vehicle_name = get_vehicle_name(vehicle)
                 local player_name = get_player_name(player)
+                
                 if not player_scores[player_name] then
                     player_scores[player_name] = {}
                 end
                 if not player_scores[player_name][vehicle_name] then
                     player_scores[player_name][vehicle_name] = 0
                 end
-                local high_score = player_scores[player_name][vehicle_name]
-                if drift_score > high_score then
-                    player_scores[player_name][vehicle_name] = drift_score
-                    save_scores(player_scores_file, player_scores)
+                if not session_high_scores[player_name] then
+                    session_high_scores[player_name] = {}
                 end
+                if not session_high_scores[player_name][vehicle_name] then
+                    session_high_scores[player_name][vehicle_name] = 0
+                end
+
+                session_high_scores[player_name][vehicle_name] = math.max(session_high_scores[player_name][vehicle_name], drift_score)
+
+                if save_scores_to_file then
+                    local high_score = math.max(player_scores[player_name][vehicle_name], session_high_scores[player_name][vehicle_name])
+                    if drift_score > high_score then
+                        player_scores[player_name][vehicle_name] = drift_score
+                        save_scores(player_scores_file, player_scores)
+                    end
+                end
+
                 if player == PLAYER.PLAYER_ID() then
+                    local high_score = math.max(player_scores[player_name][vehicle_name], session_high_scores[player_name][vehicle_name])
                     local message = (drift_score > high_score) and ("New Record: " .. drift_score) or ("Drift Score: " .. drift_score .. " (High Score: " .. high_score .. ")")
                     draw_large_message("Drift Ended", message .. " - Car: " .. vehicle_name, 300)
                 end
+
                 drift_score = 0
             end
         end
@@ -384,6 +418,18 @@ end
 -- Lulzman is a stupid dog
 menu.toggle(menu.my_root(), "Save Scores to File", {"savescorestofile"}, "Toggle saving drift scores to the file.", function(state)
     save_scores_to_file = state
+
+    if state then
+        for player_name, vehicles in pairs(session_high_scores) do
+            if not player_scores[player_name] then
+                player_scores[player_name] = {}
+            end
+            for vehicle_name, score in pairs(vehicles) do
+                player_scores[player_name][vehicle_name] = math.max(player_scores[player_name][vehicle_name] or 0, score)
+            end
+        end
+        save_scores(player_scores_file, player_scores)
+    end
 end, true)
 
 menu.slider(menu.my_root(), "Proximity Threshold", {"proximitythreshold"}, "Adjust the proximity threshold for displaying and updating drift scores.", 10, 1000, 500, 10, function(value)
