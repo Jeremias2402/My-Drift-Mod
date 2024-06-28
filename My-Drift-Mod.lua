@@ -28,8 +28,9 @@ local offset_z = 1
 local proximity_threshold = 500
 local show_distance = false
 local show_other_players_scores = true
-local drift_mode_enabled = false
 local save_scores_to_file = true
+local drift_mode_enabled = false
+local score_counter_enabled = true
 
 local function load_scores(file_path)
     if not filesystem.exists(file_path) then
@@ -203,7 +204,7 @@ local function update_drift_score(player)
 end
 
 util.create_tick_handler(function()
-    if not drift_mode_enabled then return end
+    if not score_counter_enabled then return end
 
     local player_ped = PLAYER.PLAYER_PED_ID()
     if PED.IS_PED_IN_ANY_VEHICLE(player_ped, false) then
@@ -262,7 +263,7 @@ util.create_tick_handler(function()
 end)
 
 util.create_tick_handler(function()
-    if not drift_mode_enabled then return end
+    if not score_counter_enabled then return end
 
     local player_ped = PLAYER.PLAYER_PED_ID()
     if PED.IS_PED_IN_ANY_VEHICLE(player_ped, false) then
@@ -394,9 +395,25 @@ end, false)
 menu.toggle(menu.my_root(), "Show Other Players Scores And Save Them To PlayerScores folder", {"showotherscores"}, "Toggle displaying the drift scores for other players.", function(value)
     show_other_players_scores = value
 end, true)
+
 menu.toggle(menu.my_root(), "Enable Drift Mode", {"driftmode"}, "Toggle drift mode on or off.", function(state)
-    toggle_drift_mode(state)
+    drift_mode_enabled = state
+    if state then
+        util.log("Drift mode enabled")
+        util.toast("Drift mode enabled")
+        menu.trigger_commands("driftmode on")
+    else
+        util.log("Drift mode disabled")
+        util.toast("Drift mode disabled")
+        menu.trigger_commands("driftmode off")
+    end
 end, false)
+
+menu.toggle(menu.my_root(), "Enable Score Counter", {"scorecounter"}, "Toggle the drift score counter on or off.", function(state)
+    score_counter_enabled = state
+end, true)
+
+
 menu.action(menu.my_root(), "Reset Drift Score", {}, "Resets the drift score to zero.", function()
     reset_drift_score()
 end)
