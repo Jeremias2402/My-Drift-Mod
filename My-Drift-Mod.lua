@@ -21,6 +21,8 @@ local drift_mod_dir = filesystem.scripts_dir() .. "\\DriftMod"
 filesystem.mkdirs(drift_mod_dir)
 local player_scores_file = drift_mod_dir .. "\\PlayerScores.json"
 local player_scores = {}
+local save_scores_to_file = true
+local updates_pending = false
 
 local offset_x = 0
 local offset_y = 0
@@ -28,7 +30,6 @@ local offset_z = 1
 local proximity_threshold = 500
 local show_distance = false
 local show_other_players_scores = true
-local save_scores_to_file = true
 local drift_mode_enabled = false
 local score_counter_enabled = true
 
@@ -56,7 +57,12 @@ local function save_scores(file_path, data)
     file:close()
 end
 
-
+local function handle_pending_updates()
+    if save_scores_to_file and updates_pending then
+        save_scores(player_scores_file, player_scores)
+        updates_pending = false
+    end
+end
 
 player_scores = load_scores(player_scores_file)
 
@@ -169,7 +175,7 @@ local function update_drift_score(player)
         local drift_angle, dot_product, drift_direction = get_drift_direction(vehicle)
         local speed = ENTITY.GET_ENTITY_SPEED_VECTOR(vehicle, true).y
 
-        if drift_angle > 15 and dot_product > 0 and speed > 1 then
+        if drift_angle > 15 and dot_product > 0 and speed > 4 then
             drift_score = drift_score + 100
             last_drift_time = util.current_time_millis()
         end
@@ -184,11 +190,13 @@ local function update_drift_score(player)
                 if not player_scores[player_name][vehicle_name] then
                     player_scores[player_name][vehicle_name] = 0
                 end
-                local high_score = player_scores[player_name][vehicle_name]
+                local high_score = player_scores[player_name][vehicle_name] or 0
                 if drift_score > high_score then
                     player_scores[player_name][vehicle_name] = drift_score
                     if save_scores_to_file then
                         save_scores(player_scores_file, player_scores)
+                    else
+                        updates_pending = true
                     end
                 end
                 if player == PLAYER.PLAYER_ID() then
@@ -204,8 +212,6 @@ local function update_drift_score(player)
     end
 end
 
-
-
 util.create_tick_handler(function()
     if not score_counter_enabled then return end
 
@@ -216,7 +222,7 @@ util.create_tick_handler(function()
         local drift_angle, dot_product, drift_direction = get_drift_direction(vehicle)
         local speed = ENTITY.GET_ENTITY_SPEED_VECTOR(vehicle, true).y
 
-        if drift_angle > 15 and dot_product > 0 and speed > 1 then
+        if drift_angle > 15 and dot_product > 0 and speed > 4 then
             local_drift_score = local_drift_score + 100
             local_last_drift_time = util.current_time_millis()
         end
@@ -231,11 +237,13 @@ util.create_tick_handler(function()
                 if not player_scores[player_name][vehicle_name] then
                     player_scores[player_name][vehicle_name] = 0
                 end
-                local high_score = player_scores[player_name][vehicle_name]
+                local high_score = player_scores[player_name][vehicle_name] or 0
                 if local_drift_score > high_score then
                     player_scores[player_name][vehicle_name] = local_drift_score
                     if save_scores_to_file then
                         save_scores(player_scores_file, player_scores)
+                    else
+                        updates_pending = true
                     end
                 end
                 local message = (local_drift_score > high_score) and ("New Record: " .. local_drift_score) or ("Drift Score: " .. local_drift_score .. " (High Score: " .. high_score .. ")")
@@ -266,7 +274,6 @@ util.create_tick_handler(function()
 
     util.yield()
 end)
-
 
 util.create_tick_handler(function()
     if not score_counter_enabled then return end
@@ -387,22 +394,7 @@ local function toggle_drift_mode(state)
     end
 end
 
--- Lulzman is a stupid dog
-menu.toggle(menu.my_root(), "Save Scores to File", {"savescorestofile"}, "Toggle saving drift scores to the file.", function(state)
-    save_scores_to_file = state
-end, true)
-
-menu.slider(menu.my_root(), "Proximity Threshold", {"proximitythreshold"}, "Adjust the proximity threshold for displaying and updating drift scores.", 10, 1000, 500, 10, function(value)
-    proximity_threshold = value
-end)
-menu.toggle(menu.my_root(), "Show Distance", {"showdistance"}, "Toggle displaying the distance next to the drift score for debugging.", function(value)
-    show_distance = value
-end, false)
-menu.toggle(menu.my_root(), "Show Other Players Scores And Save Them To PlayerScores folder", {"showotherscores"}, "Toggle displaying the drift scores for other players.", function(value)
-    show_other_players_scores = value
-end, true)
-
-menu.toggle(menu.my_root(), "Enable Drift Handling", {"driftmode"}, "Toggle drift mode on or off.", function(state)
+menu.toggle(menu.my_root(), "Enable Drift Mode", {"driftmode"}, "Toggle drift mode on or off.", function(state)
     drift_mode_enabled = state
     if state then
         util.log("Drift mode enabled")
@@ -419,6 +411,22 @@ menu.toggle(menu.my_root(), "Enable Score Counter", {"scorecounter"}, "Toggle th
     score_counter_enabled = state
 end, true)
 
+menu.slider(menu.my_root(), "Proximity Threshold", {"proximitythreshold"}, "Adjust the proximity threshold for displaying and updating drift scores.", 10, 1000, 500, 10, function(value)
+    proximity_threshold = value
+end)
+
+menu.toggle(menu.my_root(), "Show Distance", {"showdistance"}, "Toggle displaying the distance next to the drift score for debugging.", function(value)
+    show_distance = value
+end, false)
+
+menu.toggle(menu.my_root(), "Show Other Players' Scores", {"showotherscores"}, "Toggle displaying the drift scores for other players.", function(value)
+    show_other_players_scores = value
+end, true)
+
+menu.toggle(menu.my_root(), "Save Scores to File", {"savescorestofile"}, "Toggle saving drift scores to the file.", function(state)
+    save_scores_to_file = state
+    handle_pending_updates()
+end, true)
 
 menu.action(menu.my_root(), "Reset Drift Score", {}, "Resets the drift score to zero.", function()
     reset_drift_score()
@@ -426,7 +434,7 @@ end)
 
 menu.divider(menu.my_root(), "Drift Mod")
 menu.divider(menu.my_root(), "Instructions")
-menu.action(menu.my_root(), "How to Use :)", {}, "1. Enable drift mode using the toggle.\n2. Start drifting lol.\n3. Your drift score will be displayed above the vehicle if it's greater than zero.\n4. Adjust the proximity threshold using the slider.\n5. Toggle display options as needed.\n6. Drift scores are saved and displayed for nearby players within the specified proximity.", function() end)
+menu.action(menu.my_root(), "How to Use", {}, "1. Enable drift mode using the toggle.\n2. Start drifting with your vehicle.\n3. Your drift score will be displayed above the vehicle if it's greater than zero.\n4. Adjust the proximity threshold using the slider.\n5. Toggle display options as needed.\n6. Drift scores are saved and displayed for nearby players within the specified proximity.", function() end)
 
 menu.my_root():action("Check for Updates :)", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
     auto_update_config.check_interval = 0
