@@ -64,6 +64,24 @@ local function handle_pending_updates()
     end
 end
 
+local config = {
+    disable_traffic = true,
+    disable_peds = true,
+}
+
+local pop_multiplier_id
+
+menu.toggle(menu.my_root(), "No Traffic", {}, "", function(on)
+    if on then
+        local ped_sphere = config.disable_peds and 0.0 or 1.0
+        local traffic_sphere = config.disable_traffic and 0.0 or 1.0
+        pop_multiplier_id = MISC.ADD_POP_MULTIPLIER_SPHERE(1.1, 1.1, 1.1, 15000.0, ped_sphere, traffic_sphere, false, true)
+        MISC.CLEAR_AREA(1.1, 1.1, 1.1, 19999.9, true, false, false, true)
+    else
+        MISC.REMOVE_POP_MULTIPLIER_SPHERE(pop_multiplier_id, false)
+    end
+end)
+
 local enable_rear_smoke = false
 local rear_smoke_size = 0.05
 local max_smoke_size = 0.3
