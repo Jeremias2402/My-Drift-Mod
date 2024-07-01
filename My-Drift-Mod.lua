@@ -64,6 +64,66 @@ local function handle_pending_updates()
     end
 end
 
+local enable_rear_smoke = false
+local rear_smoke_size = 0.05
+local max_smoke_size = 0.3
+local press_start_time = 0
+local press_duration = 0
+local decrease_rate = 0.002
+
+menu.toggle_loop(menu.my_root(), "Enable Drift Smoke", {"Enable Drift_Smoke"}, "Clouds bro, clouds", function() -- Stolen and "improved" from Calmbun script lol
+    enable_rear_smoke = true
+    local rear_effect = {"scr_recartheft", "scr_wheel_burnout"}
+    local vehicle = PED.GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
+    local is_gas_or_brake_pressed = PAD.IS_CONTROL_PRESSED(71, 71) or PAD.IS_CONTROL_PRESSED(72, 72)
+    local is_vehicle_moving = ENTITY.GET_ENTITY_SPEED(vehicle) > 0.1
+
+    if is_gas_or_brake_pressed then
+        if press_start_time == 0 then
+            press_start_time = util.current_time_millis()
+        end
+        press_duration = util.current_time_millis() - press_start_time
+
+        local scale_factor = math.min(press_duration / 350000, 1)
+        rear_smoke_size = rear_smoke_size + scale_factor * (max_smoke_size - rear_smoke_size)
+    else
+        press_start_time = 0
+        press_duration = 0
+        if is_vehicle_moving then
+            rear_smoke_size = math.max(0.05, rear_smoke_size - decrease_rate)
+        else
+            rear_smoke_size = math.max(0, rear_smoke_size - decrease_rate * 10)
+        end
+    end
+
+    if ENTITY.DOES_ENTITY_EXIST(vehicle) and not ENTITY.IS_ENTITY_DEAD(vehicle, false) and
+       VEHICLE.IS_VEHICLE_DRIVEABLE(vehicle, false) then
+        STREAMING.REQUEST_NAMED_PTFX_ASSET(rear_effect[1])
+        while not STREAMING.HAS_NAMED_PTFX_ASSET_LOADED(rear_effect[1]) do
+            util.yield_once()
+        end
+
+        local rear_wheels = {"wheel_lr", "wheel_rr"}
+
+        if enable_rear_smoke then
+            for _, boneName in pairs(rear_wheels) do
+                local bone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(vehicle, boneName)
+                GRAPHICS.USE_PARTICLE_FX_ASSET(rear_effect[1])
+                GRAPHICS.START_PARTICLE_FX_NON_LOOPED_ON_ENTITY_BONE(
+                    rear_effect[2],
+                    vehicle,
+                    0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0,
+                    bone,
+                    rear_smoke_size,
+                    false, false, false)
+            end
+        end
+    end
+end, function()
+    enable_rear_smoke = false
+end)
+
 player_scores = load_scores(player_scores_file)
 
 local function get_drift_direction(vehicle)
