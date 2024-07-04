@@ -379,7 +379,7 @@ util.create_tick_handler(function()
         
         local success, screen_x, screen_y = world_to_screen(text_pos_x, text_pos_y, text_pos_z)
         
-        if success and local_drift_score > 0 then
+        if success and local_drift_score > 0 and VEHICLE.GET_PED_IN_VEHICLE_SEAT(vehicle, -1) == PLAYER.PLAYER_PED_ID() then
             local score_text = "x" .. math.floor(local_drift_score)
             local rating_text, rating_color = get_rating_text(local_drift_score)
             
@@ -425,7 +425,7 @@ util.create_tick_handler(function()
                         
                         local success, screen_x, screen_y = world_to_screen(text_pos_x, text_pos_y, text_pos_z)
                         
-                        if success and drift_scores[player] > 0 then
+                        if success and (drift_scores[player] or 0) > 0 and VEHICLE.GET_PED_IN_VEHICLE_SEAT(vehicle, -1) == PLAYER.GET_PLAYER_PED_SCRIPT_INDEX(player) then
                             local drift_score = drift_scores[player] or 0
                             local score_text = "x" .. math.floor(drift_score)
                             local rating_text, rating_color = get_rating_text(drift_score)
