@@ -27,6 +27,7 @@ local updates_pending = false
 local offset_x = 0
 local offset_y = 0
 local offset_z = 1
+local font_size = 0.8
 local proximity_threshold = 500
 local show_distance = false
 local show_other_players_scores = true
@@ -385,10 +386,10 @@ util.create_tick_handler(function()
             
             local shadow_offsets = {{0.001, 0}, {-0.001, 0}, {0, 0.001}, {0, -0.001}}
             for _, offset in ipairs(shadow_offsets) do
-                draw_text(screen_x + offset[1], screen_y + offset[2], score_text, 0.8, {r = 0, g = 0, b = 0, a = 1.0}, 4)
+                draw_text(screen_x + offset[1], screen_y + offset[2], score_text, font_size, {r = 0, g = 0, b = 0, a = 1.0}, 4)
             end
-            draw_text(screen_x, screen_y, score_text, 0.8, {r = 1.0, g = 1.0, b = 1.0, a = 1.0}, 4)
-            draw_text(screen_x, screen_y + 0.05, rating_text, 0.6, rating_color, 4)
+            draw_text(screen_x, screen_y, score_text, font_size, {r = 1.0, g = 1.0, b = 1.0, a = 1.0}, 4)
+            draw_text(screen_x, screen_y + 0.05, rating_text, font_size * 0.75, rating_color, 4)
         end
     end
 
@@ -429,24 +430,24 @@ util.create_tick_handler(function()
                             local drift_score = drift_scores[player] or 0
                             local score_text = "x" .. math.floor(drift_score)
                             local rating_text, rating_color = get_rating_text(drift_score)
-
-                            local scale = 0.05 / (distance / proximity_threshold)
+                        
+                            local scale = font_size * 0.05 / (distance / proximity_threshold)
                             if scale < 0.3 then
                                 scale = 0.3
                             elseif scale > 0.6 then
                                 scale = 0.6
-                        end
-
+                            end
+                        
                             if show_distance then
                                 score_text = score_text .. " (" .. math.floor(distance) .. "m)"
                             end
-
+                        
                             local shadow_offsets = {{0.001, 0}, {-0.001, 0}, {0, 0.001}, {0, -0.001}}
                             for _, offset in ipairs(shadow_offsets) do
                                 draw_text(screen_x + offset[1], screen_y + offset[2], score_text, scale, {r = 0, g = 0, b = 0, a = 1.0}, 4)
                             end
                             draw_text(screen_x, screen_y, score_text, scale, {r = 1.0, g = 1.0, b = 1.0, a = 1.0}, 4)
-                            draw_text(screen_x, screen_y + 0.05 * scale, rating_text, scale * 0.6, rating_color, 4)
+                            draw_text(screen_x, screen_y + 0.05 * scale, rating_text, scale * 0.75, rating_color, 4)
                         end
                     end
                 end
@@ -505,6 +506,22 @@ menu.toggle(menu.my_root(), "Save Scores to File", {"savescorestofile"}, "Toggle
     save_scores_to_file = state
     handle_pending_updates()
 end, true)
+
+menu.slider(menu.my_root(), "Offset X", {"offset_x"}, "Adjust the X offset for the drift score text.", -10, 10, math.floor(offset_x), 1, function(value)
+    offset_x = value
+end)
+
+menu.slider(menu.my_root(), "Offset Y", {"offset_y"}, "Adjust the Y offset for the drift score text.", -10, 10, math.floor(offset_y), 1, function(value)
+    offset_y = value
+end)
+
+menu.slider(menu.my_root(), "Offset Z", {"offset_z"}, "Adjust the Z offset for the drift score text.", -10, 10, math.floor(offset_z), 1, function(value)
+    offset_z = value
+end)
+
+menu.slider_float(menu.my_root(), "Font Size", {"font_size"}, "Adjust the font size for the drift score text.", 5, 100, math.floor(font_size * 10), 5, function(value)
+    font_size = value / 10
+end)
 
 menu.action(menu.my_root(), "Reset Drift Score", {}, "Resets the drift score to zero.", function()
     reset_drift_score()
