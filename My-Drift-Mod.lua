@@ -13,6 +13,10 @@ end
 util.require_natives(1663599433)
 local json = require("json")
 
+local vehicle_menu = menu.list(menu.my_root(), "Vehicle Settings", {}, "Heh")
+local display_menu = menu.list(menu.my_root(), "Display Settings", {}, "Hah")
+local world_menu = menu.list(menu.my_root(), "World Setting", {}, "Heh")
+
 local local_drift_score = 0
 local local_last_drift_time = util.current_time_millis()
 local drift_scores = {}
@@ -30,7 +34,7 @@ local offset_z = 1
 local font_size = 0.8
 local proximity_threshold = 500
 local show_distance = false
-local show_other_players_scores = true
+local show_other_players_scores = false
 local drift_mode_enabled = false
 local score_counter_enabled = true
 
@@ -72,7 +76,7 @@ local config = {
 
 local pop_multiplier_id
 
-menu.toggle(menu.my_root(), "No Traffic", {}, "", function(on)
+menu.toggle(world_menu, "No Traffic", {}, "", function(on)
     if on then
         local ped_sphere = config.disable_peds and 0.0 or 1.0
         local traffic_sphere = config.disable_traffic and 0.0 or 1.0
@@ -90,7 +94,7 @@ local press_start_time = 0
 local press_duration = 0
 local decrease_rate = 0.002
 
-menu.toggle_loop(menu.my_root(), "Enable Drift Smoke", {"Enable Drift_Smoke"}, "Clouds bro, clouds", function() -- Stolen and "improved" from Calmbun script lol
+menu.toggle_loop(world_menu, "Enable Drift Smoke", {"Enable Drift_Smoke"}, "Clouds bro, clouds", function() -- Stolen and "improved" from Calmbun script lol
     enable_rear_smoke = true
     local rear_effect = {"scr_recartheft", "scr_wheel_burnout"}
     local vehicle = PED.GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
@@ -473,55 +477,46 @@ local function toggle_drift_mode(state)
     end
 end
 
-menu.toggle(menu.my_root(), "Enable Drift Mode", {"driftmode"}, "Toggle drift mode on or off.", function(state)
-    drift_mode_enabled = state
-    if state then
-        util.log("Drift mode enabled")
-        util.toast("Drift mode enabled")
-        menu.trigger_commands("driftmode on")
-    else
-        util.log("Drift mode disabled")
-        util.toast("Drift mode disabled")
-        menu.trigger_commands("driftmode off")
-    end
+menu.toggle(vehicle_menu, "Enable Drift Mode", {"driftmode"}, "Toggle drift mode on or off.", function(state)
+    toggle_drift_mode(state)
 end, false)
 
-menu.toggle(menu.my_root(), "Enable Score Counter", {"scorecounter"}, "Toggle the drift score counter on or off.", function(state)
+menu.toggle(vehicle_menu, "Enable Score Counter", {"scorecounter"}, "Toggle the drift score counter on or off.", function(state)
     score_counter_enabled = state
 end, true)
 
-menu.slider(menu.my_root(), "Proximity Threshold", {"proximitythreshold"}, "Adjust the proximity threshold for displaying and updating drift scores.", 10, 1000, 500, 10, function(value)
+menu.slider(display_menu, "Proximity Threshold", {"proximitythreshold"}, "Adjust the proximity threshold for displaying and updating other players drift scores.", 10, 1000, proximity_threshold, 10, function(value)
     proximity_threshold = value
 end)
 
-menu.toggle(menu.my_root(), "Show Distance", {"showdistance"}, "Toggle displaying the distance next to the drift score for debugging.", function(value)
-    show_distance = value
-end, false)
-
-menu.toggle(menu.my_root(), "Show Other Players' Scores", {"showotherscores"}, "Toggle displaying the drift scores for other players.", function(value)
-    show_other_players_scores = value
-end, true)
-
-menu.toggle(menu.my_root(), "Save Scores to File", {"savescorestofile"}, "Toggle saving drift scores to the file.", function(state)
-    save_scores_to_file = state
-    handle_pending_updates()
-end, true)
-
-menu.slider(menu.my_root(), "Offset X", {"offset_x"}, "Adjust the X offset for the drift score text.", -10, 10, math.floor(offset_x), 1, function(value)
+menu.slider(display_menu, "Offset X", {"offset_x"}, "Adjust the X offset for the drift score text.", -10, 10, math.floor(offset_x), 1, function(value)
     offset_x = value
 end)
 
-menu.slider(menu.my_root(), "Offset Y", {"offset_y"}, "Adjust the Y offset for the drift score text.", -10, 10, math.floor(offset_y), 1, function(value)
+menu.slider(display_menu, "Offset Y", {"offset_y"}, "Adjust the Y offset for the drift score text.", -10, 10, math.floor(offset_y), 1, function(value)
     offset_y = value
 end)
 
-menu.slider(menu.my_root(), "Offset Z", {"offset_z"}, "Adjust the Z offset for the drift score text.", -10, 10, math.floor(offset_z), 1, function(value)
+menu.slider(display_menu, "Offset Z", {"offset_z"}, "Adjust the Z offset for the drift score text.", -10, 10, math.floor(offset_z), 1, function(value)
     offset_z = value
 end)
 
-menu.slider_float(menu.my_root(), "Font Size", {"font_size"}, "Adjust the font size for the drift score text.", 5, 100, math.floor(font_size * 10), 5, function(value)
+menu.slider_float(display_menu, "Font Size", {"font_size"}, "Adjust the font size for the drift score text.", 5, 100, math.floor(font_size * 10), 1, function(value)
     font_size = value / 10
 end)
+
+menu.toggle(display_menu, "Show Distance", {"showdistance"}, "Toggle displaying the distance next to the drift score for debugging.", function(value)
+    show_distance = value
+end, false)
+
+menu.toggle(display_menu, "Show Other Players' Scores", {"showotherscores"}, "Toggle displaying the drift scores for other players.", function(value)
+    show_other_players_scores = value
+end, true)
+
+menu.toggle(vehicle_menu, "Save Scores to File", {"savescorestofile"}, "Toggle saving drift scores to the file.", function(state)
+    save_scores_to_file = state
+    handle_pending_updates()
+end, true)
 
 menu.action(menu.my_root(), "Reset Drift Score", {}, "Resets the drift score to zero.", function()
     reset_drift_score()
